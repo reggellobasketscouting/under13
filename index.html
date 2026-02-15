@@ -22,7 +22,7 @@
         .p-num { background: var(--orange); color: white; font-weight: bold; font-size: 1.4rem; padding: 5px 10px; border-radius: 6px; }
         .p-name { font-weight: bold; font-size: 1.2rem; text-transform: uppercase; }
         
-        /* Centratura Statistiche */
+        /* Statistiche Centrate */
         .stat-section { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .stat-box { display: flex; flex-direction: column; align-items: center; text-align: center; }
         .display-val { font-size: 2.8rem; font-weight: bold; font-family: 'Courier New', monospace; line-height: 1.2; margin: 5px 0; }
@@ -40,10 +40,9 @@
         .warning { border: 2px solid #ffcc00; }
         .out { background: #331111; border: 2px solid var(--red); opacity: 0.9; }
         
-        /* View Mode Overrides */
+        /* View Mode */
         .view-only .btn-corr, .view-only .btn-large, .view-only #admin-menu-btn { display: none !important; }
         .view-only .stat-section { grid-template-columns: 1fr 1fr; width: 100%; }
-        .view-only .player-card { padding: 20px 10px; }
     </style>
 </head>
 <body id="bodyTag">
@@ -79,7 +78,7 @@
             </div>
             <div style="display: flex; gap: 5px;">
                 <button id="shareBtnTop" class="btn-icon" title="Condividi">🔗</button>
-                <button id="view-back-btn" class="hidden" onclick="showViewHistory()" style="background:#333; border:none; color:white; padding:8px 15px; border-radius:5px; font-size:0.8rem;">Elenco Partite</button>
+                <button id="view-back-btn" class="hidden" onclick="showViewHistory()" style="background:#333; border:none; color:white; padding:8px 15px; border-radius:5px; font-size:0.8rem;">Tutte le Partite</button>
                 <button id="admin-menu-btn" onclick="location.href=location.pathname" style="background:#333; border:none; color:white; padding:8px 15px; border-radius:5px; font-size:0.8rem;">Menu</button>
             </div>
         </div>
@@ -89,7 +88,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, updateDoc, onSnapshot, query, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, updateDoc, onSnapshot, query, orderBy, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDQmVNfLViOKFEK0U5htF37BSdUmQ6oi94",
@@ -108,7 +107,6 @@
     const urlParams = new URLSearchParams(window.location.search);
     const viewId = urlParams.get('view');
 
-    // Funzione per mostrare l'elenco partite agli spettatori
     window.showViewHistory = () => {
         window.history.replaceState({}, '', window.location.pathname + '?view=all');
         location.reload();
@@ -135,11 +133,17 @@
     window.updateStat = async (pIdx, field, val) => {
         if(viewId && viewId !== 'all') return;
         const matchRef = doc(db, "matches", currentMatchId);
-        onSnapshot(matchRef, async (d) => {
-            let newPlayers = [...d.data().players];
-            newPlayers[pIdx][field] = Math.max(0, newPlayers[pIdx][field] + val);
-            await updateDoc(matchRef, { players: newPlayers });
-        }, {onlyOnce: true});
+        const d = await getDoc(matchRef);
+        let newPlayers = [...d.data().players];
+        newPlayers[pIdx][field] = Math.max(0, newPlayers[pIdx][field] + val);
+        await updateDoc(matchRef, { players: newPlayers });
+    };
+
+    window.renameMatch = async (id, currentTitle) => {
+        const newTitle = prompt("Inserisci il nuovo nome per la partita:", currentTitle);
+        if (newTitle && newTitle !== currentTitle) {
+            await updateDoc(doc(db, "matches", id), { title: newTitle });
+        }
     };
 
     window.deleteMatch = async (id) => {
@@ -148,12 +152,16 @@
         }
     };
 
-    window.shareMatch = (id) => {
+    window.shareMatch = async (id, title) => {
         const shareUrl = `${window.location.origin}${window.location.pathname}?view=${id}`;
+        const shareText = `Segui in diretta la partita: ${title} 🏀`;
+        
         if (navigator.share) {
-            navigator.share({ title: 'Basket Live Stats', url: shareUrl });
+            try {
+                await navigator.share({ title: 'Basket Live Stats', text: shareText, url: shareUrl });
+            } catch (err) { console.log("Errore condivisione"); }
         } else {
-            prompt("Link per spettatori:", shareUrl);
+            prompt(`Copia il link per: ${title}`, shareUrl);
         }
     };
 
@@ -169,13 +177,12 @@
             document.getElementById('shareBtnTop').classList.add('hidden');
             document.getElementById('view-back-btn').classList.remove('hidden');
         }
-        
-        document.getElementById('shareBtnTop').onclick = () => shareMatch(id);
 
         onSnapshot(doc(db, "matches", id), (doc) => {
             if(!doc.exists()) return;
             const data = doc.data();
             document.getElementById('currentTitle').innerText = data.title;
+            document.getElementById('shareBtnTop').onclick = () => shareMatch(id, data.title);
             renderPlayers(data.players);
         });
     }
@@ -192,9 +199,7 @@
                     <div class="stat-box">
                         <span class="label">Punti</span>
                         <span class="display-val">${p.points}</span>
-                        <div class="controls-row" style="display:flex; gap:10px; align-items:center;">
-                            <button class="btn-corr" onclick="updateStat(${i}, 'points', -1)">−</button>
-                        </div>
+                        <button class="btn-corr" onclick="updateStat(${i}, 'points', -1)">−</button>
                         <div style="display:flex; gap:5px; width:100%;">
                             <button class="btn-large btn-pts" onclick="updateStat(${i}, 'points', 1)">+1</button>
                             <button class="btn-large btn-pts" onclick="updateStat(${i}, 'points', 2)">+2</button>
@@ -204,9 +209,7 @@
                     <div class="stat-box" style="border-left: 1px solid #333; padding-left:10px;">
                         <span class="label">Falli</span>
                         <span class="display-val" style="color:${p.fouls >= 5 ? 'var(--red)' : 'white'}">${p.fouls}</span>
-                        <div class="controls-row">
-                            <button class="btn-corr" onclick="updateStat(${i}, 'fouls', -1)">−</button>
-                        </div>
+                        <button class="btn-corr" onclick="updateStat(${i}, 'fouls', -1)">−</button>
                         <button class="btn-large btn-foul" style="width:100%" onclick="updateStat(${i}, 'fouls', 1)">FALLO</button>
                     </div>
                 </div>
@@ -214,25 +217,27 @@
         `).join('');
     }
 
-    // LOGICA DI AVVIO
     if(viewId && viewId !== 'all') {
         loadMatch(viewId);
     } else {
         const q = query(collection(db, "matches"), orderBy("createdAt", "desc"));
         onSnapshot(q, (snapshot) => {
-            const listHtml = snapshot.docs.map(doc => `
+            const listHtml = snapshot.docs.map(docSnap => {
+                const m = docSnap.data();
+                return `
                 <div class="history-item">
-                    <div onclick="location.href='?view=${doc.id}'" style="cursor:pointer">
-                        <b>${doc.data().title}</b><br>
-                        <small>${new Date(doc.data().createdAt).toLocaleString()}</small>
+                    <div onclick="location.href='?view=${docSnap.id}'" style="cursor:pointer">
+                        <b>${m.title}</b><br>
+                        <small>${new Date(m.createdAt).toLocaleString()}</small>
                     </div>
                     ${!viewId ? `
-                    <div style="position:absolute; top:10px; right:10px; display:flex; gap:10px;">
-                        <button class="btn-icon" onclick="window.shareMatch('${doc.id}')">🔗</button>
-                        <button class="btn-icon" onclick="window.deleteMatch('${doc.id}')" style="color:var(--red)">🗑️</button>
+                    <div style="position:absolute; top:10px; right:10px; display:flex; gap:8px;">
+                        <button class="btn-icon" onclick="window.shareMatch('${docSnap.id}', '${m.title}')" title="Condividi">🔗</button>
+                        <button class="btn-icon" onclick="window.renameMatch('${docSnap.id}', '${m.title}')" title="Rinomina">✏️</button>
+                        <button class="btn-icon" onclick="window.deleteMatch('${docSnap.id}')" style="color:var(--red)" title="Elimina">🗑️</button>
                     </div>` : ''}
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
             
             if(viewId === 'all') {
                 document.getElementById('setupScreen').classList.add('hidden');
@@ -243,7 +248,6 @@
             }
         });
     }
-    window.loadMatch = loadMatch;
 </script>
 </body>
 </html>
