@@ -3,37 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Basket Stats Pro - Archivio</title>
+    <title>Basket Stats Pro - Big Buttons</title>
     <style>
-        :root { --orange: #ff6600; --red: #ff4444; --bg: #121212; --card: #1e1e1e; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding: 15px; }
+        :root { --orange: #ff6600; --red: #ff4444; --bg: #121212; --card: #1e1e1e; --grey: #333; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; }
         .container { max-width: 600px; margin: auto; }
         .hidden { display: none; }
         
         /* Setup Screen */
         .setup-card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: white; box-sizing: border-box; }
-        .btn-main { width: 100%; background: var(--orange); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: white; box-sizing: border-box; font-size: 1rem; }
+        .btn-main { width: 100%; background: var(--orange); color: white; border: none; padding: 18px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1rem; }
         
         /* Match Screen */
-        .match-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--orange); padding-bottom: 10px; margin-bottom: 20px; }
-        .player-card { background: var(--card); padding: 12px; border-radius: 10px; margin-bottom: 10px; display: grid; grid-template-columns: 1fr 2fr; gap: 10px; border-left: 5px solid #444; }
-        .player-info { display: flex; flex-direction: column; justify-content: center; }
-        .p-num { color: var(--orange); font-weight: bold; font-size: 1.2rem; }
-        .p-name { font-weight: bold; }
+        .match-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--orange); padding-bottom: 10px; margin-bottom: 15px; }
+        .player-card { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .score-group, .foul-group { text-align: center; }
-        .btn-row { display: flex; gap: 4px; margin-top: 5px; }
-        .btn-s { flex: 1; padding: 8px 0; border: none; border-radius: 4px; color: white; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
-        .b-1 { background: #333; } .b-2 { background: #444; } .b-3 { background: #555; }
-        .b-f { background: var(--red); width: 100%; margin-top: 5px; }
+        .player-info { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .p-num { background: var(--orange); color: white; font-weight: bold; font-size: 1.4rem; padding: 5px 10px; border-radius: 6px; }
+        .p-name { font-weight: bold; font-size: 1.2rem; text-transform: uppercase; }
         
-        .warning { border-left-color: #ffcc00; }
-        .out { background: #331111; border-left-color: var(--red); opacity: 0.8; }
+        .stat-section { display: grid; grid-template-columns: 1.2fr 1fr; gap: 15px; }
+        
+        .display-val { font-size: 2.5rem; font-weight: bold; font-family: 'Courier New', monospace; line-height: 1; }
+        .label { font-size: 0.8rem; color: #888; text-transform: uppercase; display: block; }
+        
+        .controls-row { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
+        .btn-large { flex: 1; padding: 20px 0; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 1.4rem; transition: 0.1s; }
+        .btn-large:active { transform: scale(0.95); }
+        
+        .btn-pts { background: var(--grey); border-bottom: 4px solid #111; }
+        .btn-foul { background: var(--red); border-bottom: 4px solid #800; }
+        .btn-corr { background: #444; color: #aaa; width: 40px; height: 40px; border-radius: 50%; border: none; font-size: 1.2rem; cursor: pointer; }
 
-        /* History */
-        .history-item { background: #222; padding: 10px; margin-top: 5px; border-radius: 5px; cursor: pointer; border-left: 3px solid var(--orange); }
+        .warning { border: 2px solid #ffcc00; }
+        .out { background: #331111; border: 2px solid var(--red); opacity: 0.9; }
+
+        .history-item { background: #222; padding: 15px; margin-top: 10px; border-radius: 10px; cursor: pointer; border-left: 5px solid var(--orange); }
     </style>
 </head>
 <body>
@@ -42,25 +48,23 @@
     <div id="setupScreen">
         <h1>🏀 Nuova Partita</h1>
         <div class="setup-card">
-            <input type="text" id="matchTitle" placeholder="Titolo Partita (es. Reggello vs Roma)">
-            <h3>Aggiungi Giocatore</h3>
-            <div style="display: flex; gap: 5px;">
-                <input type="number" id="pNumber" placeholder="N°" style="width: 30%;">
-                <input type="text" id="pName" placeholder="Nome giocatore" style="width: 70%;">
+            <input type="text" id="matchTitle" placeholder="Titolo (es. Finale vs Roma)">
+            <div style="display: flex; gap: 10px;">
+                <input type="number" id="pNumber" placeholder="N° Maglia" style="width: 35%;">
+                <input type="text" id="pName" placeholder="Nome Giocatore" style="width: 65%;">
             </div>
-            <button class="btn-main" onclick="addPlayerToDraft()" style="background: #444;">Aggiungi al Roster</button>
-            <ul id="draftList" style="list-style: none; padding: 0; color: #aaa; font-size: 0.9rem;"></ul>
+            <button class="btn-main" onclick="addPlayerToDraft()" style="background: #444;">AGGIUNGI GIOCATORE</button>
+            <ul id="draftList" style="margin: 15px 0; padding: 0; list-style: none; color: #bbb;"></ul>
             <button class="btn-main" onclick="startMatch()">INIZIA PARTITA</button>
         </div>
-
-        <h3>Partite Recenti</h3>
+        <h3 style="margin-top:30px;">Archivio Partite</h3>
         <div id="historyList"></div>
     </div>
 
     <div id="matchScreen" class="hidden">
         <div class="match-header">
-            <h2 id="currentTitle">Partita</h2>
-            <button onclick="closeMatch()" style="background:none; border:1px solid #666; color:#aaa; border-radius:5px;">Chiudi</button>
+            <h2 id="currentTitle" style="margin:0; font-size:1.1rem;"></h2>
+            <button onclick="closeMatch()" style="background:#333; border:none; color:white; padding:8px 15px; border-radius:5px;">Esci</button>
         </div>
         <div id="playerList"></div>
     </div>
@@ -76,33 +80,25 @@
         const name = document.getElementById('pName').value;
         if(!num || !name) return;
         draft.push({ num, name, points: 0, fouls: 0 });
-        document.getElementById('draftList').innerHTML += `<li>#${num} - ${name}</li>`;
+        document.getElementById('draftList').innerHTML += `<li><b>#${num}</b> ${name}</li>`;
         document.getElementById('pNumber').value = ""; document.getElementById('pName').value = "";
     }
 
     function startMatch() {
-        const title = document.getElementById('matchTitle').value || "Partita senza titolo";
-        if(draft.length === 0) return alert("Aggiungi almeno un giocatore!");
-        
-        currentMatch = {
-            id: Date.now(),
-            title: title,
-            players: [...draft]
-        };
-        saveMatch();
-        showMatch();
+        const title = document.getElementById('matchTitle').value || "Partita " + new Date().toLocaleDateString();
+        if(draft.length === 0) return alert("Inserisci i giocatori!");
+        currentMatch = { id: Date.now(), title, players: [...draft] };
+        saveMatch(); showMatch();
     }
 
-    function updateStat(pIndex, field, val) {
-        currentMatch.players[pIndex][field] = Math.max(0, currentMatch.players[pIndex][field] + val);
-        saveMatch();
-        renderPlayers();
+    function updateStat(pIdx, field, val) {
+        currentMatch.players[pIdx][field] = Math.max(0, currentMatch.players[pIdx][field] + val);
+        saveMatch(); renderPlayers();
     }
 
     function saveMatch() {
-        const index = matches.findIndex(m => m.id === currentMatch.id);
-        if(index > -1) matches[index] = currentMatch;
-        else matches.push(currentMatch);
+        const idx = matches.findIndex(m => m.id === currentMatch.id);
+        if(idx > -1) matches[idx] = currentMatch; else matches.push(currentMatch);
         localStorage.setItem('basketArchive', JSON.stringify(matches));
     }
 
@@ -111,23 +107,31 @@
         list.innerHTML = currentMatch.players.map((p, i) => `
             <div class="player-card ${p.fouls === 4 ? 'warning' : ''} ${p.fouls >= 5 ? 'out' : ''}">
                 <div class="player-info">
-                    <span class="p-num">#${p.num}</span>
+                    <span class="p-num">${p.num}</span>
                     <span class="p-name">${p.name}</span>
                 </div>
-                <div>
-                    <div class="stat-grid">
-                        <div class="score-group">
-                            <span style="font-size:0.7rem; color:#888;">PT: <b>${p.points}</b></span>
-                            <div class="btn-row">
-                                <button class="btn-s b-1" onclick="updateStat(${i}, 'points', 1)">+1</button>
-                                <button class="btn-s b-2" onclick="updateStat(${i}, 'points', 2)">+2</button>
-                                <button class="btn-s b-3" onclick="updateStat(${i}, 'points', 3)">+3</button>
-                            </div>
+                
+                <div class="stat-section">
+                    <div>
+                        <span class="label">Punti Totali</span>
+                        <div class="controls-row">
+                            <span class="display-val">${p.points}</span>
+                            <button class="btn-corr" onclick="updateStat(${i}, 'points', -1)">−</button>
                         </div>
-                        <div class="foul-group">
-                            <span style="font-size:0.7rem; color:#888;">FALLI: <b>${p.fouls}</b></span>
-                            <button class="btn-s b-f" onclick="updateStat(${i}, 'fouls', 1)">FALLO</button>
+                        <div style="display:flex; gap:5px; margin-top:15px;">
+                            <button class="btn-large btn-pts" onclick="updateStat(${i}, 'points', 1)">+1</button>
+                            <button class="btn-large btn-pts" onclick="updateStat(${i}, 'points', 2)">+2</button>
+                            <button class="btn-large btn-pts" onclick="updateStat(${i}, 'points', 3)">+3</button>
                         </div>
+                    </div>
+
+                    <div style="border-left: 1px solid #333; padding-left: 15px;">
+                        <span class="label">Falli</span>
+                        <div class="controls-row">
+                            <span class="display-val" style="color:${p.fouls >= 5 ? 'var(--red)' : 'white'}">${p.fouls}</span>
+                            <button class="btn-corr" onclick="updateStat(${i}, 'fouls', -1)">−</button>
+                        </div>
+                        <button class="btn-large btn-foul" style="width:100%; margin-top:15px;" onclick="updateStat(${i}, 'fouls', 1)">FALLO</button>
                     </div>
                 </div>
             </div>
@@ -142,28 +146,24 @@
     }
 
     function closeMatch() {
-        if(confirm("Tornare al menu? La partita rimarrà salvata nell'archivio.")) {
-            document.getElementById('setupScreen').classList.remove('hidden');
-            document.getElementById('matchScreen').classList.add('hidden');
-            draft = [];
-            document.getElementById('draftList').innerHTML = "";
-            renderHistory();
+        if(confirm("Tornare al menu? I dati sono salvati.")) {
+            location.reload();
         }
-    }
-
-    function loadHistoryMatch(id) {
-        currentMatch = matches.find(m => m.id === id);
-        showMatch();
     }
 
     function renderHistory() {
         const hist = document.getElementById('historyList');
-        hist.innerHTML = matches.reverse().map(m => `
-            <div class="history-item" onclick="loadHistoryMatch(${m.id})">
-                <b>${m.title}</b><br>
-                <small>${new Date(m.id).toLocaleDateString()} - Giocatori: ${m.players.length}</small>
+        hist.innerHTML = matches.slice().reverse().map(m => `
+            <div class="history-item" onclick="loadHistory(${m.id})">
+                <div style="font-weight:bold; font-size:1.1rem;">${m.title}</div>
+                <div style="color:#888; font-size:0.8rem;">${new Date(m.id).toLocaleString()}</div>
             </div>
         `).join('');
+    }
+
+    function loadHistory(id) {
+        currentMatch = matches.find(m => m.id === id);
+        showMatch();
     }
 
     renderHistory();
