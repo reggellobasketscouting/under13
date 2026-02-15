@@ -10,19 +10,16 @@
         .container { max-width: 600px; margin: auto; }
         .hidden { display: none !important; }
         
-        /* UI Elements */
         .setup-card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; }
         input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: white; box-sizing: border-box; font-size: 1rem; }
         .btn-main { width: 100%; background: var(--orange); color: white; border: none; padding: 18px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1rem; }
         
-        /* Match Card */
         .match-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--orange); padding-bottom: 10px; margin-bottom: 15px; }
         .player-card { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333; }
         .player-info { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .p-num { background: var(--orange); color: white; font-weight: bold; font-size: 1.4rem; padding: 5px 10px; border-radius: 6px; }
         .p-name { font-weight: bold; font-size: 1.2rem; text-transform: uppercase; }
         
-        /* Statistiche Centrate */
         .stat-section { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .stat-box { display: flex; flex-direction: column; align-items: center; text-align: center; }
         .display-val { font-size: 2.8rem; font-weight: bold; font-family: 'Courier New', monospace; line-height: 1.2; margin: 5px 0; }
@@ -31,43 +28,35 @@
         .btn-large { flex: 1; padding: 20px 0; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 1.4rem; margin-top: 10px; }
         .btn-pts { background: var(--grey); border-bottom: 4px solid #111; }
         .btn-foul { background: var(--red); border-bottom: 4px solid #800; }
-        .btn-corr { background: #444; color: #aaa; width: 35px; height: 35px; border-radius: 50%; border: none; font-size: 1.2rem; }
+        .btn-corr { background: #444; color: #aaa; width: 35px; height: 35px; border-radius: 50%; border: none; font-size: 1.2rem; cursor:pointer; }
 
-        /* History & Utils */
         .history-item { background: #222; padding: 15px; margin-top: 10px; border-radius: 10px; border-left: 5px solid var(--orange); position: relative; }
         .btn-icon { background: none; border: none; color: #666; cursor: pointer; font-size: 1.2rem; padding: 5px; }
         
         .warning { border: 2px solid #ffcc00; }
         .out { background: #331111; border: 2px solid var(--red); opacity: 0.9; }
         
-        /* View Mode */
-        .view-only .btn-corr, .view-only .btn-large, .view-only #admin-menu-btn { display: none !important; }
-        .view-only .stat-section { grid-template-columns: 1fr 1fr; width: 100%; }
+        /* Regole specifiche per Modalità View */
+        .view-only .btn-corr, .view-only .btn-large { display: none !important; }
     </style>
 </head>
 <body id="bodyTag">
 
 <div class="container">
-    <div id="viewHistoryScreen" class="hidden">
-        <h1>🏀 Partite Under 13</h1>
-        <p style="color:#888">Seleziona una partita per seguire i punteggi live:</p>
-        <div id="viewHistoryList"></div>
-    </div>
-
     <div id="setupScreen">
         <h1>🏀 Basket Stats Admin</h1>
         <div class="setup-card">
-            <input type="text" id="matchTitle" placeholder="Titolo Partita">
+            <input type="text" id="matchTitle" placeholder="Titolo Partita (es. Finale U13)">
             <div style="display: flex; gap: 10px;">
-                <input type="number" id="pNumber" placeholder="N°">
+                <input type="number" id="pNumber" placeholder="N° Maglia">
                 <input type="text" id="pName" placeholder="Nome Giocatore">
             </div>
-            <button class="btn-main" onclick="addPlayerToDraft()" style="background: #444;">AGGIUNGI GIOCATORE</button>
+            <button class="btn-main" onclick="addPlayerToDraft()" style="background: #444;">AGGIUNGI AL ROSTER</button>
             <ul id="draftList" style="margin: 15px 0; padding: 0; list-style: none; color: #bbb;"></ul>
-            <button class="btn-main" onclick="startMatch()">INIZIA E SALVA CLOUD</button>
+            <button class="btn-main" onclick="startNewMatch()">CREA E INIZIA PARTITA</button>
         </div>
-        <h3 style="margin-top:30px;">Gestione Partite</h3>
-        <div id="historyList"></div>
+        <h3 style="margin-top:30px;">Tutte le Partite (Admin)</h3>
+        <div id="historyList">Caricamento...</div>
     </div>
 
     <div id="matchScreen" class="hidden">
@@ -77,9 +66,8 @@
                 <small id="viewBadge" class="hidden" style="color:var(--orange)">LIVE • SOLA CONSULTAZIONE</small>
             </div>
             <div style="display: flex; gap: 5px;">
-                <button id="shareBtnTop" class="btn-icon" title="Condividi">🔗</button>
-                <button id="view-back-btn" class="hidden" onclick="showViewHistory()" style="background:#333; border:none; color:white; padding:8px 15px; border-radius:5px; font-size:0.8rem;">Tutte le Partite</button>
-                <button id="admin-menu-btn" onclick="location.href=location.pathname" style="background:#333; border:none; color:white; padding:8px 15px; border-radius:5px; font-size:0.8rem;">Menu</button>
+                <button id="shareBtnTop" class="btn-icon">🔗</button>
+                <button onclick="location.href=location.pathname" style="background:#333; border:none; color:white; padding:8px 15px; border-radius:5px; font-size:0.8rem; cursor:pointer;">Esci</button>
             </div>
         </div>
         <div id="playerList"></div>
@@ -104,13 +92,10 @@
     let draft = [];
     let currentMatchId = null;
 
+    // Gestione URL
     const urlParams = new URLSearchParams(window.location.search);
-    const viewId = urlParams.get('view');
-
-    window.showViewHistory = () => {
-        window.history.replaceState({}, '', window.location.pathname + '?view=all');
-        location.reload();
-    };
+    const viewId = urlParams.get('view');   // Link per spettatori
+    const adminId = urlParams.get('match'); // Link per te (admin)
 
     window.addPlayerToDraft = () => {
         const num = document.getElementById('pNumber').value;
@@ -121,17 +106,17 @@
         document.getElementById('pNumber').value = ""; document.getElementById('pName').value = "";
     };
 
-    window.startMatch = async () => {
+    window.startNewMatch = async () => {
         const title = document.getElementById('matchTitle').value || "Partita Cloud";
-        if(draft.length === 0) return alert("Aggiungi giocatori!");
+        if(draft.length === 0) return alert("Inserisci i giocatori!");
         const docRef = await addDoc(collection(db, "matches"), {
             title: title, players: draft, createdAt: Date.now()
         });
-        loadMatch(docRef.id);
+        window.location.search = `?match=${docRef.id}`;
     };
 
     window.updateStat = async (pIdx, field, val) => {
-        if(viewId && viewId !== 'all') return;
+        if(viewId) return; 
         const matchRef = doc(db, "matches", currentMatchId);
         const d = await getDoc(matchRef);
         let newPlayers = [...d.data().players];
@@ -140,42 +125,37 @@
     };
 
     window.renameMatch = async (id, currentTitle) => {
-        const newTitle = prompt("Inserisci il nuovo nome per la partita:", currentTitle);
+        const newTitle = prompt("Rinomina partita:", currentTitle);
         if (newTitle && newTitle !== currentTitle) {
             await updateDoc(doc(db, "matches", id), { title: newTitle });
         }
     };
 
     window.deleteMatch = async (id) => {
-        if(confirm("Eliminare definitivamente la partita?")) {
+        if(confirm("Eliminare definitivamente?")) {
             await deleteDoc(doc(db, "matches", id));
         }
     };
 
-    window.shareMatch = async (id, title) => {
+    window.shareMatch = (id, title) => {
         const shareUrl = `${window.location.origin}${window.location.pathname}?view=${id}`;
         const shareText = `Segui in diretta la partita: ${title} 🏀`;
-        
         if (navigator.share) {
-            try {
-                await navigator.share({ title: 'Basket Live Stats', text: shareText, url: shareUrl });
-            } catch (err) { console.log("Errore condivisione"); }
+            navigator.share({ title: 'Basket Live Stats', text: shareText, url: shareUrl });
         } else {
-            prompt(`Copia il link per: ${title}`, shareUrl);
+            prompt("Copia link spettatori:", shareUrl);
         }
     };
 
-    function loadMatch(id) {
+    function loadMatch(id, isViewOnly) {
         currentMatchId = id;
         document.getElementById('setupScreen').classList.add('hidden');
-        document.getElementById('viewHistoryScreen').classList.add('hidden');
         document.getElementById('matchScreen').classList.remove('hidden');
         
-        if(viewId) {
+        if(isViewOnly) {
             document.getElementById('bodyTag').classList.add('view-only');
             document.getElementById('viewBadge').classList.remove('hidden');
             document.getElementById('shareBtnTop').classList.add('hidden');
-            document.getElementById('view-back-btn').classList.remove('hidden');
         }
 
         onSnapshot(doc(db, "matches", id), (doc) => {
@@ -217,8 +197,11 @@
         `).join('');
     }
 
-    if(viewId && viewId !== 'all') {
-        loadMatch(viewId);
+    // LOGICA DI AVVIO
+    if(viewId) {
+        loadMatch(viewId, true);
+    } else if(adminId) {
+        loadMatch(adminId, false);
     } else {
         const q = query(collection(db, "matches"), orderBy("createdAt", "desc"));
         onSnapshot(q, (snapshot) => {
@@ -226,26 +209,18 @@
                 const m = docSnap.data();
                 return `
                 <div class="history-item">
-                    <div onclick="location.href='?view=${docSnap.id}'" style="cursor:pointer">
+                    <div onclick="window.location.search='?match=${docSnap.id}'" style="cursor:pointer">
                         <b>${m.title}</b><br>
                         <small>${new Date(m.createdAt).toLocaleString()}</small>
                     </div>
-                    ${!viewId ? `
                     <div style="position:absolute; top:10px; right:10px; display:flex; gap:8px;">
-                        <button class="btn-icon" onclick="window.shareMatch('${docSnap.id}', '${m.title}')" title="Condividi">🔗</button>
-                        <button class="btn-icon" onclick="window.renameMatch('${docSnap.id}', '${m.title}')" title="Rinomina">✏️</button>
-                        <button class="btn-icon" onclick="window.deleteMatch('${docSnap.id}')" style="color:var(--red)" title="Elimina">🗑️</button>
-                    </div>` : ''}
+                        <button class="btn-icon" onclick="window.shareMatch('${docSnap.id}', '${m.title}')">🔗</button>
+                        <button class="btn-icon" onclick="window.renameMatch('${docSnap.id}', '${m.title}')">✏️</button>
+                        <button class="btn-icon" onclick="window.deleteMatch('${docSnap.id}')" style="color:var(--red)">🗑️</button>
+                    </div>
                 </div>`;
             }).join('');
-            
-            if(viewId === 'all') {
-                document.getElementById('setupScreen').classList.add('hidden');
-                document.getElementById('viewHistoryScreen').classList.remove('hidden');
-                document.getElementById('viewHistoryList').innerHTML = listHtml;
-            } else {
-                document.getElementById('historyList').innerHTML = listHtml;
-            }
+            document.getElementById('historyList').innerHTML = listHtml;
         });
     }
 </script>
