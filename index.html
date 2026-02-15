@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basket Stats Live</title>
+    <style>
+        :root { --orange: #ff6600; --red: #ff4444; --bg: #121212; --card: #1e1e1e; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: white; margin: 0; padding: 15px; }
+        .container { max-width: 500px; margin: auto; }
+        h1 { text-align: center; color: var(--orange); letter-spacing: 1px; }
+
+        .input-group { display: flex; gap: 8px; margin-bottom: 25px; }
+        input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #222; color: white; outline: none; }
+        input:focus { border-color: var(--orange); }
+        .add-btn { background: var(--orange); color: white; border: none; padding: 0 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        .player-list { display: flex; flex-direction: column; gap: 12px; }
+        .player-card { 
+            background: var(--card); padding: 15px; border-radius: 12px; 
+            display: grid; grid-template-columns: 1.5fr 1fr 1fr; align-items: center;
+            border: 1px solid #333; transition: 0.3s;
+        }
+        
+        .name-section { font-weight: bold; font-size: 1rem; position: relative; }
+        .del-player { font-size: 0.7rem; color: #666; cursor: pointer; display: block; margin-top: 5px; }
+        
+        .stat-box { display: flex; flex-direction: column; align-items: center; }
+        .label { font-size: 0.65rem; color: #888; text-transform: uppercase; margin-bottom: 4px; }
+        .value { font-size: 1.5rem; font-weight: bold; min-width: 30px; text-align: center; }
+        
+        .controls { display: flex; align-items: center; gap: 5px; }
+        .btn-small { 
+            width: 28px; height: 28px; border-radius: 6px; border: none; 
+            color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-p { background: #3d3d3d; }
+        .btn-f { background: #4a1c1c; color: var(--red); border: 1px solid var(--red); }
+        
+        .warning { border-color: #ffcc00; box-shadow: inset 5px 0 0 #ffcc00; }
+        .out { background: #331111; border-color: var(--red); box-shadow: inset 5px 0 0 var(--red); opacity: 0.9; }
+        
+        .footer-btns { margin-top: 40px; display: flex; gap: 10px; }
+        button.secondary { flex: 1; background: transparent; border: 1px solid #444; color: #888; padding: 12px; border-radius: 8px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🏀 TEAM TRACKER</h1>
+
+    <div class="input-group">
+        <input type="text" id="playerName" placeholder="Nome giocatore..." onkeypress="if(event.key==='Enter') addPlayer()">
+        <button class="add-btn" onclick="addPlayer()">AGGIUNGI</button>
+    </div>
+
+    <div id="playerList" class="player-list"></div>
+
+    <div class="footer-btns">
+        <button class="secondary" onclick="resetStats()">AZZERA STATS</button>
+        <button class="secondary" onclick="clearAll()">CANCELLA TEAM</button>
+    </div>
+</div>
+
+<script>
+    let players = JSON.parse(localStorage.getItem('basketTeam')) || [];
+
+    function save() { localStorage.setItem('basketTeam', JSON.stringify(players)); }
+
+    function addPlayer() {
+        const input = document.getElementById('playerName');
+        const name = input.value.trim();
+        if (!name) return;
+        players.push({ id: Date.now(), name, points: 0, fouls: 0 });
+        input.value = "";
+        save(); render();
+    }
+
+    function update(id, field, val) {
+        const p = players.find(x => x.id === id);
+        p[field] = Math.max(0, p[field] + val);
+        save(); render();
+    }
+
+    function removePlayer(id) {
+        players = players.filter(x => x.id !== id);
+        save(); render();
+    }
+
+    function resetStats() {
+        if(confirm("Azzerare punti e falli di tutti?")) {
+            players.forEach(p => { p.points = 0; p.fouls = 0; });
+            save(); render();
+        }
+    }
+
+    function clearAll() {
+        if(confirm("Cancellare tutti i giocatori?")) {
+            players = [];
+            save(); render();
+        }
+    }
+
+    function render() {
+        const list = document.getElementById('playerList');
+        list.innerHTML = players.map(p => `
+            <div class="player-card ${p.fouls === 4 ? 'warning' : ''} ${p.fouls >= 5 ? 'out' : ''}">
+                <div class="name-section">
+                    ${p.name} ${p.fouls >= 5 ? '🚫' : ''}
+                    <span class="del-player" onclick="removePlayer(${p.id})">Rimuovi</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">Punti</span>
+                    <div class="controls">
+                        <button class="btn-small btn-p" onclick="update(${p.id}, 'points', -1)">-</button>
+                        <span class="value">${p.points}</span>
+                        <button class="btn-small btn-p" onclick="update(${p.id}, 'points', 1)">+</button>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <span class="label">Falli</span>
+                    <div class="controls">
+                        <button class="btn-small btn-f" onclick="update(${p.id}, 'fouls', -1)">-</button>
+                        <span class="value">${p.fouls}</span>
+                        <button class="btn-small btn-f" onclick="update(${p.id}, 'fouls', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    render();
+</script>
+</body>
+</html>
