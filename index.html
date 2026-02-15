@@ -3,13 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Basket Stats Cloud</title>
+    <title>Basket Stats Reggello</title>
     <style>
         :root { --orange: #ff6600; --red: #ff4444; --bg: #121212; --card: #1e1e1e; --grey: #333; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; }
         .container { max-width: 600px; margin: auto; }
         .hidden { display: none !important; }
         
+        /* Logo e Header Style */
+        .app-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+        .logo-img { width: 50px; height: 50px; object-fit: contain; }
+        h1 { font-size: 1.5rem; margin: 0; }
+
         .setup-card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; }
         input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: white; box-sizing: border-box; font-size: 1rem; }
         .btn-main { width: 100%; background: var(--orange); color: white; border: none; padding: 18px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1rem; }
@@ -36,15 +41,18 @@
         .warning { border: 2px solid #ffcc00; }
         .out { background: #331111; border: 2px solid var(--red); opacity: 0.9; }
         
-        /* Regole specifiche per Modalità View */
         .view-only .btn-corr, .view-only .btn-large { display: none !important; }
     </style>
 </head>
 <body id="bodyTag">
 
 <div class="container">
+    <div class="app-header">
+        <img src="logo%20reggello.png" alt="Logo Reggello" class="logo-img" onerror="this.style.display='none'">
+        <h1 id="appMainTitle">Basket Stats Reggello</h1>
+    </div>
+
     <div id="setupScreen">
-        <h1>🏀 Basket Stats Admin</h1>
         <div class="setup-card">
             <input type="text" id="matchTitle" placeholder="Titolo Partita (es. Finale U13)">
             <div style="display: flex; gap: 10px;">
@@ -92,10 +100,9 @@
     let draft = [];
     let currentMatchId = null;
 
-    // Gestione URL
     const urlParams = new URLSearchParams(window.location.search);
-    const viewId = urlParams.get('view');   // Link per spettatori
-    const adminId = urlParams.get('match'); // Link per te (admin)
+    const viewId = urlParams.get('view');
+    const adminId = urlParams.get('match');
 
     window.addPlayerToDraft = () => {
         const num = document.getElementById('pNumber').value;
@@ -197,7 +204,6 @@
         `).join('');
     }
 
-    // LOGICA DI AVVIO
     if(viewId) {
         loadMatch(viewId, true);
     } else if(adminId) {
