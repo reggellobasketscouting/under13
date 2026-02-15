@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basket Stats Cloud</title>
+    <style>
+        :root { --orange: #ff6600; --red: #ff4444; --bg: #121212; --card: #1e1e1e; --grey: #333; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; }
+        .container { max-width: 600px; margin: auto; }
+        .hidden { display: none !important; }
+        
+        /* UI Elements */
+        .setup-card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: white; box-sizing: border-box; font-size: 1rem; }
+        .btn-main { width: 100%; background: var(--orange); color: white; border: none; padding: 18px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1rem; }
+        
+        /* Match Card */
+        .match-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--orange); padding-bottom: 10px; margin-bottom: 15px; }
+        .player-card { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333; }
+        .player-info { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .p-num { background: var(--orange); color: white; font-weight: bold; font-size: 1.4rem; padding: 5px 10px; border-radius: 6px; }
+        .p-name { font-weight: bold; font-size: 1.2rem; text-transform: uppercase; }
+        
+        .stat-section { display: grid; grid-template-columns: 1.2fr 1fr; gap: 15px; }
+        .display-val { font-size: 2.5rem; font-weight: bold; font-family: 'Courier New', monospace; line-height: 1; }
+        .label { font-size: 0.8rem; color: #888; text-transform: uppercase; }
+        
+        .btn-large { flex: 1; padding: 20px 0; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 1.4rem; }
+        .btn-pts { background: var(--grey); border-bottom: 4px solid #111; }
+        .btn-foul { background: var(--red); border-bottom: 4px solid #800; }
+        .btn-corr { background: #444; color: #aaa; width: 40px; height: 40px; border-radius: 50%; border: none; font-size: 1.2rem; }
+
+        /* History & Utils */
+        .history-item { background: #222; padding: 15px; margin-top: 10px; border-radius: 10px; border-left: 5px solid var(--orange); position: relative; }
+        .btn-icon { background: none; border: none; color: #666; cursor: pointer; font-size: 1.2rem; padding: 5px; }
+        .btn-icon:hover { color: white; }
+        .warning { border: 2px solid #ffcc00; }
+        .out { background: #331111; border: 2px solid var(--red); opacity: 0.9; }
+        
+        /* View Mode specific */
+        .view-only .controls-row button, .view-only .btn-large { display: none !important; }
+        .view-only .stat-section { grid-template-columns: 1fr 1fr; }
+    </style>
+</head>
+<body id="bodyTag">
+
+<div class="container">
+    <div id="setupScreen">
+        <h1>🏀 Basket Stats Cloud</h1>
+        <div class="setup-card">
+            <input type="text" id="matchTitle" placeholder="Titolo Partita">
+            <div style="display: flex; gap: 10px;">
+                <input type="number" id="pNumber" placeholder="N°">
+                <input type="text" id="pName" placeholder="Nome Giocatore">
+            </div>
+            <button class="btn-main" onclick="addPlayerToDraft()" style="background: #444;">AGGIUNGI GIOCATORE</button>
+            <ul id="draftList" style="margin: 15px 0; padding: 0; list-style: none; color: #bbb;"></ul>
+            <button class="btn-main" onclick="startMatch()">INIZIA E SALVA CLOUD</button>
+        </div>
+        <h3 style="margin-top:30px;">Partite nel Cloud</h3>
+        <div id="historyList"></div>
+    </div>
+
+    <div id="matchScreen" class="hidden">
+        <div class="match-header">
+            <div>
+                <h2 id="currentTitle" style="margin:0; font-size:1.1rem;"></h2>
+                <small id="viewBadge" class="hidden" style="color:var(--orange)">MODALITÀ CONSULTAZIONE</small>
+            </div>
+            <div style="display: flex; gap: 5px;">
+                <button id="shareBtnTop" class="btn-icon" title="Condividi">🔗</button>
+                <button onclick="location.href=location.pathname" style="background:#333; border:none; color:white; padding:8px 15px; border-radius:5px;">Menu</button>
+            </div>
+        </div>
+        <div id="playerList"></div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, updateDoc, onSnapshot, query, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDQmVNfLViOKFEK0U5htF37BSdUmQ6oi94",
+        authDomain: "statsunder13.firebaseapp.com",
+        projectId: "statsunder13",
+        storageBucket: "statsunder13.firebasestorage.app",
+        messagingSenderId: "233460085857",
+        appId: "1:233460085857:web:132407f5c98f8064ea2620"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let draft = [];
+    let currentMatchId = null;
+
+    // Gestione Modalità View
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewId = urlParams.get('view');
+
+    window.addPlayerToDraft = () => {
+        const num = document.getElementById('pNumber').value;
+        const name = document.getElementById('pName').value;
+        if(!num || !name) return;
+        draft.push({ num, name, points: 0, fouls: 0 });
+        document.getElementById('draftList').innerHTML += `<li><b>#${num}</b> ${name}</li>`;
+        document.getElementById('pNumber').value = ""; document.getElementById('pName').value = "";
+    };
+
+    window.startMatch = async () => {
+        const title = document.getElementById('matchTitle').value || "Partita Cloud";
+        if(draft.length === 0) return alert("Aggiungi giocatori!");
+        const docRef = await addDoc(collection(db, "matches"), {
+            title: title, players: draft, createdAt: Date.now()
+        });
+        loadMatch(docRef.id);
+    };
+
+    window.updateStat = async (pIdx, field, val) => {
+        if(viewId) return; // Protezione view mode
+        const matchRef = doc(db, "matches", currentMatchId);
+        onSnapshot(matchRef, async (d) => {
+            let newPlayers = [...d.data().players];
+            newPlayers[pIdx][field] = Math.max(0, newPlayers[pIdx][field] + val);
+            await updateDoc(matchRef, { players: newPlayers });
+        }, {onlyOnce: true});
+    };
+
+    window.deleteMatch = async (id) => {
+        if(confirm("Sei sicuro di voler eliminare definitivamente questa partita?")) {
+            await deleteDoc(doc(db, "matches", id));
+        }
+    };
+
+    window.shareMatch = (id) => {
+        const shareUrl = `${window.location.origin}${window.location.pathname}?view=${id}`;
+        if (navigator.share) {
+            navigator.share({ title: 'Segui la partita live', url: shareUrl });
+        } else {
+            prompt("Copia il link per la sola consultazione:", shareUrl);
+        }
+    };
+
+    function loadMatch(id) {
+        currentMatchId = id;
+        document.getElementById('setupScreen').classList.add('hidden');
+        document.getElementById('matchScreen').classList.remove('hidden');
+        if(viewId) {
+            document.getElementById('bodyTag').classList.add('view-only');
+            document.getElementById('viewBadge').classList.remove('hidden');
+            document.getElementById('shareBtnTop').classList.add('hidden');
+        }
+        
+        document.getElementById('shareBtnTop').onclick = () => shareMatch(id);
+
+        onSnapshot(doc(db, "matches", id), (doc) => {
+            if(!doc.exists()) { alert("Partita eliminata"); location.href=location.pathname; return; }
+            const data = doc.data();
+            document.getElementById('currentTitle').innerText = data.title;
+            renderPlayers(data.players);
+        });
+    }
+
+    function renderPlayers(players) {
+        const list = document.getElementById('playerList');
+        list.innerHTML = players.map((p, i) => `
+            <div class="player-card ${p.fouls === 4 ? 'warning' : ''} ${p.fouls >= 5 ? 'out' : ''}">
+                <div class="player-info">
+                    <span class="p-num">${p.num}</span>
+                    <span class="p-name">${p.name}</span>
+                </div>
+                <div class="stat-section">
+                    <div>
+                        <span class="label">Punti</span>
+                        <div class="controls-row" style="display:flex; align-items:center; gap:10px;">
+                            <span class="display-val">${p.points}</span>
+                            <button class="btn-corr" onclick="updateStat(${i}, 'points', -1)">−</button>
+                        </div>
+                        <div class="controls-row" style="display:flex; gap:5px; margin-top:10px;">
+                            <button class="btn-large btn-pts" onclick="updateStat(${i}, 'points', 1)">+1</button>
+                            <button class="btn-large btn-pts" onclick="updateStat(${i}, 'points', 2)">+2</button>
+                            <button class="btn-large btn-pts" onclick="updateStat(${i}, 'points', 3)">+3</button>
+                        </div>
+                    </div>
+                    <div style="border-left: 1px solid #333; padding-left: 15px;">
+                        <span class="label">Falli</span>
+                        <div class="controls-row" style="display:flex; align-items:center; gap:10px;">
+                            <span class="display-val">${p.fouls}</span>
+                            <button class="btn-corr" onclick="updateStat(${i}, 'fouls', -1)">−</button>
+                        </div>
+                        <button class="btn-large btn-foul" style="width:100%; margin-top:10px;" onclick="updateStat(${i}, 'fouls', 1)">FALLO</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Se siamo in modalità view, carica subito la partita
+    if(viewId) {
+        loadMatch(viewId);
+    } else {
+        const q = query(collection(db, "matches"), orderBy("createdAt", "desc"));
+        onSnapshot(q, (snapshot) => {
+            const hist = document.getElementById('historyList');
+            hist.innerHTML = snapshot.docs.map(doc => `
+                <div class="history-item">
+                    <div onclick="window.loadMatch('${doc.id}')" style="cursor:pointer">
+                        <b>${doc.data().title}</b><br>
+                        <small>${new Date(doc.data().createdAt).toLocaleString()}</small>
+                    </div>
+                    <div style="position:absolute; top:10px; right:10px; display:flex; gap:10px;">
+                        <button class="btn-icon" onclick="window.shareMatch('${doc.id}')" title="Condividi">🔗</button>
+                        <button class="btn-icon" onclick="window.deleteMatch('${doc.id}')" title="Elimina" style="color:var(--red)">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        });
+    }
+    window.loadMatch = loadMatch;
+</script>
+</body>
+</html>
