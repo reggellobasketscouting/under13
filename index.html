@@ -23,6 +23,10 @@
         input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: white; box-sizing: border-box; font-size: 1rem; }
         .btn-main { width: 100%; background: var(--team-green); color: white; border: none; padding: 18px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1rem; }
         
+        /* Stile Lista Draft */
+        #draftList { margin: 15px 0; padding: 0; list-style: none; }
+        .draft-item { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; margin-bottom: 5px; padding: 8px 12px; border-radius: 6px; border-left: 3px solid var(--team-green); }
+
         .match-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--team-green); padding-bottom: 10px; margin-bottom: 15px; }
         .player-card { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333; }
         .player-info { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
@@ -41,7 +45,7 @@
         .btn-corr { background: #444; color: #aaa; width: 35px; height: 35px; border-radius: 50%; border: none; font-size: 1.2rem; cursor:pointer; }
 
         .history-item { background: #222; padding: 15px; margin-top: 10px; border-radius: 10px; border-left: 5px solid var(--team-green); position: relative; }
-        .btn-icon { background: none; border: none; color: #666; cursor: pointer; font-size: 1.2rem; padding: 5px; }
+        .btn-icon { background: none; border: none; color: #666; cursor: pointer; font-size: 1.1rem; padding: 5px; }
         
         .warning { border: 2px solid #ffcc00; }
         .out { background: #331111; border: 2px solid var(--red); opacity: 0.8; }
@@ -66,7 +70,7 @@
                     <input type="text" id="pName" placeholder="Nome Giocatore">
                 </div>
                 <button class="btn-main" onclick="addPlayerToDraft()" style="background: #444;">AGGIUNGI GIOCATORE</button>
-                <ul id="draftList" style="margin: 15px 0; padding: 0; list-style: none; color: #bbb;"></ul>
+                <ul id="draftList"></ul>
                 <button class="btn-main" onclick="startNewMatch()">INIZIA NUOVA PARTITA</button>
             </div>
             <h3 style="margin-top:30px;">Tutte le Partite</h3>
@@ -74,7 +78,7 @@
         
         <div id="viewPanel" class="hidden">
             <h3 style="color:var(--team-green)">Partite Live & Archivio</h3>
-            <p style="color:#888; font-size:0.9rem;">Seleziona un match per vedere i punteggi in tempo reale.</p>
+            <div id="viewHistoryList"></div>
         </div>
 
         <div id="historyList">Caricamento...</div>
@@ -128,24 +132,50 @@
     const viewMode = urlParams.get('view');
     const adminId = urlParams.get('match');
 
-    // CONFIGURAZIONE TASTO ESCI
     document.getElementById('exitBtn').onclick = () => {
         if (viewMode) window.location.search = "?view=all";
         else window.location.href = window.location.pathname;
     };
 
+    // FUNZIONI DRAFT (SETUP)
     window.addPlayerToDraft = () => {
         const num = document.getElementById('pNumber').value;
         const name = document.getElementById('pName').value;
         if(!num || !name) return;
         draft.push({ num: parseInt(num), name, points: 0, fouls: 0 });
-        draft.sort((a,b) => a.num - b.num);
         renderDraft();
-        document.getElementById('pNumber').value = ""; document.getElementById('pName').value = "";
+        document.getElementById('pNumber').value = ""; 
+        document.getElementById('pName').value = "";
+    };
+
+    window.editDraftPlayer = (idx) => {
+        const p = draft[idx];
+        const newNum = prompt("Modifica Numero:", p.num);
+        const newName = prompt("Modifica Nome:", p.name);
+        if (newNum !== null && newName !== null) {
+            draft[idx].num = parseInt(newNum);
+            draft[idx].name = newName;
+            renderDraft();
+        }
+    };
+
+    window.removeDraftPlayer = (idx) => {
+        draft.splice(idx, 1);
+        renderDraft();
     };
 
     function renderDraft() {
-        document.getElementById('draftList').innerHTML = draft.map(p => `<li><b>#${p.num}</b> ${p.name}</li>`).join('');
+        draft.sort((a,b) => a.num - b.num);
+        const list = document.getElementById('draftList');
+        list.innerHTML = draft.map((p, i) => `
+            <li class="draft-item">
+                <span><b>#${p.num}</b> ${p.name}</span>
+                <div>
+                    <button class="btn-icon" onclick="editDraftPlayer(${i})">✏️</button>
+                    <button class="btn-icon" onclick="removeDraftPlayer(${i})" style="color:var(--red)">🗑️</button>
+                </div>
+            </li>
+        `).join('');
     }
 
     window.startNewMatch = async () => {
@@ -157,6 +187,7 @@
         window.location.search = `?match=${docRef.id}`;
     };
 
+    // FUNZIONI MATCH LIVE
     window.updateStat = async (pIdx, field, val) => {
         if(viewMode) return; 
         const matchRef = doc(db, "matches", currentMatchId);
@@ -171,14 +202,12 @@
         const d = await getDoc(matchRef);
         let players = [...d.data().players];
         const p = players[pIdx];
-        
         const newNum = prompt("Nuovo Numero maglia:", p.num);
         const newName = prompt("Nuovo Nome:", p.name);
-        
         if (newNum !== null && newName !== null) {
             players[pIdx].num = parseInt(newNum);
             players[pIdx].name = newName;
-            players.sort((a,b) => a.num - b.num); // Riordina dopo modifica
+            players.sort((a,b) => a.num - b.num);
             await updateDoc(matchRef, { players });
         }
     };
@@ -188,6 +217,12 @@
         const shareText = `Segui il live del Basket Reggello: ${title} 🏀`;
         if (navigator.share) navigator.share({ title: 'Basket Reggello Live', text: shareText, url: shareUrl });
         else prompt("Link spettatori:", shareUrl);
+    };
+
+    window.deleteMatch = async (id) => {
+        if(confirm("Eliminare definitivamente la partita dall'archivio?")) {
+            await deleteDoc(doc(db, "matches", id));
+        }
     };
 
     function loadMatch(id, isViewOnly) {
@@ -212,9 +247,7 @@
 
     function renderPlayers(players) {
         const list = document.getElementById('playerList');
-        // Assicura ordine per numero anche in visualizzazione
-        const sorted = [...players].sort((a,b) => a.num - b.num);
-        list.innerHTML = sorted.map((p, i) => `
+        list.innerHTML = players.map((p, i) => `
             <div class="player-card ${p.fouls === 4 ? 'warning' : ''} ${p.fouls >= 5 ? 'out' : ''}">
                 <div class="player-info">
                     <div class="p-identity">
@@ -245,7 +278,7 @@
         `).join('');
     }
 
-    // AVVIO
+    // AVVIO APP
     if(viewMode && viewMode !== 'all') {
         loadMatch(viewMode, true);
     } else if(adminId) {
