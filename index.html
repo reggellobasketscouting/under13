@@ -10,24 +10,14 @@
         .container { max-width: 600px; margin: auto; }
         .hidden { display: none !important; }
         
-        /* Header e Logo */
         .app-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding: 5px; }
         .logo-img { width: 40px; height: 40px; object-fit: contain; }
-        h1 { font-size: 1.2rem; margin: 0; color: white; }
+        h1 { font-size: 1.2rem; margin: 0; }
 
-        /* Totali Squadra */
-        .team-totals { 
-            background: var(--team-green); 
-            display: flex; 
-            justify-content: space-around; 
-            padding: 15px; 
-            border-radius: 12px; 
-            margin-bottom: 20px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
+        .team-totals { background: var(--team-green); display: flex; justify-content: space-around; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         .total-box { text-align: center; }
         .total-val { display: block; font-size: 1.8rem; font-weight: bold; font-family: 'Courier New', monospace; }
-        .total-label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.9; letter-spacing: 1px; }
+        .total-label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.9; }
 
         .setup-card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; }
         input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: white; box-sizing: border-box; font-size: 1rem; }
@@ -35,14 +25,15 @@
         
         .match-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--team-green); padding-bottom: 10px; margin-bottom: 15px; }
         .player-card { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333; }
-        .player-info { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .player-info { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .p-identity { display: flex; align-items: center; gap: 10px; }
         .p-num { background: var(--team-green); color: white; font-weight: bold; font-size: 1.4rem; padding: 5px 10px; border-radius: 6px; }
-        .p-name { font-weight: bold; font-size: 1.2rem; text-transform: uppercase; }
+        .p-name { font-weight: bold; font-size: 1.1rem; text-transform: uppercase; }
         
         .stat-section { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .stat-box { display: flex; flex-direction: column; align-items: center; text-align: center; }
         .display-val { font-size: 2.8rem; font-weight: bold; font-family: 'Courier New', monospace; line-height: 1.2; margin: 5px 0; }
-        .label { font-size: 0.85rem; color: #888; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; }
+        .label { font-size: 0.85rem; color: #888; text-transform: uppercase; font-weight: bold; }
         
         .btn-large { flex: 1; padding: 20px 0; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 1.4rem; margin-top: 10px; }
         .btn-pts { background: var(--grey); border-bottom: 4px solid #111; }
@@ -53,9 +44,9 @@
         .btn-icon { background: none; border: none; color: #666; cursor: pointer; font-size: 1.2rem; padding: 5px; }
         
         .warning { border: 2px solid #ffcc00; }
-        .out { background: #331111; border: 2px solid var(--red); opacity: 0.9; }
+        .out { background: #331111; border: 2px solid var(--red); opacity: 0.8; }
         
-        .view-only .btn-corr, .view-only .btn-large { display: none !important; }
+        .view-only .btn-corr, .view-only .btn-large, .view-only .admin-edit { display: none !important; }
     </style>
 </head>
 <body id="bodyTag">
@@ -63,21 +54,29 @@
 <div class="container">
     <div class="app-header">
         <img src="logo%20Reggello.png" alt="Logo Reggello" class="logo-img" onerror="this.style.opacity='0'">
-        <h1 id="appMainTitle">Basket Reggello Stats</h1>
+        <h1>Basket Reggello Stats</h1>
     </div>
 
     <div id="setupScreen">
-        <div class="setup-card">
-            <input type="text" id="matchTitle" placeholder="Titolo Partita (es. Reggello vs Firenze)">
-            <div style="display: flex; gap: 10px;">
-                <input type="number" id="pNumber" placeholder="N°">
-                <input type="text" id="pName" placeholder="Nome Giocatore">
+        <div id="adminPanel">
+            <div class="setup-card">
+                <input type="text" id="matchTitle" placeholder="Titolo Partita (es. Reggello vs Firenze)">
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="pNumber" placeholder="N°">
+                    <input type="text" id="pName" placeholder="Nome Giocatore">
+                </div>
+                <button class="btn-main" onclick="addPlayerToDraft()" style="background: #444;">AGGIUNGI GIOCATORE</button>
+                <ul id="draftList" style="margin: 15px 0; padding: 0; list-style: none; color: #bbb;"></ul>
+                <button class="btn-main" onclick="startNewMatch()">INIZIA NUOVA PARTITA</button>
             </div>
-            <button class="btn-main" onclick="addPlayerToDraft()" style="background: #444;">AGGIUNGI GIOCATORE</button>
-            <ul id="draftList" style="margin: 15px 0; padding: 0; list-style: none; color: #bbb;"></ul>
-            <button class="btn-main" onclick="startNewMatch()">INIZIA PARTITA</button>
+            <h3 style="margin-top:30px;">Tutte le Partite</h3>
         </div>
-        <h3 style="margin-top:30px;">Archivio Cloud</h3>
+        
+        <div id="viewPanel" class="hidden">
+            <h3 style="color:var(--team-green)">Partite Live & Archivio</h3>
+            <p style="color:#888; font-size:0.9rem;">Seleziona un match per vedere i punteggi in tempo reale.</p>
+        </div>
+
         <div id="historyList">Caricamento...</div>
     </div>
 
@@ -96,11 +95,11 @@
         <div class="match-header">
             <div>
                 <h2 id="currentTitle" style="margin:0; font-size:1rem; color:var(--team-green);"></h2>
-                <small id="viewBadge" class="hidden" style="color:#aaa">LIVE • CONSULTAZIONE</small>
+                <small id="viewBadge" class="hidden" style="color:#aaa">MODALITÀ CONSULTAZIONE</small>
             </div>
             <div style="display: flex; gap: 5px;">
                 <button id="shareBtnTop" class="btn-icon">🔗</button>
-                <button onclick="location.href=location.pathname" style="background:#333; border:none; color:white; padding:8px 15px; border-radius:5px; font-size:0.7rem; cursor:pointer;">Esci</button>
+                <button id="exitBtn" style="background:#333; border:none; color:white; padding:8px 15px; border-radius:5px; font-size:0.7rem; cursor:pointer;">Esci</button>
             </div>
         </div>
         <div id="playerList"></div>
@@ -126,17 +125,28 @@
     let currentMatchId = null;
 
     const urlParams = new URLSearchParams(window.location.search);
-    const viewId = urlParams.get('view');
+    const viewMode = urlParams.get('view');
     const adminId = urlParams.get('match');
+
+    // CONFIGURAZIONE TASTO ESCI
+    document.getElementById('exitBtn').onclick = () => {
+        if (viewMode) window.location.search = "?view=all";
+        else window.location.href = window.location.pathname;
+    };
 
     window.addPlayerToDraft = () => {
         const num = document.getElementById('pNumber').value;
         const name = document.getElementById('pName').value;
         if(!num || !name) return;
-        draft.push({ num, name, points: 0, fouls: 0 });
-        document.getElementById('draftList').innerHTML += `<li><b>#${num}</b> ${name}</li>`;
+        draft.push({ num: parseInt(num), name, points: 0, fouls: 0 });
+        draft.sort((a,b) => a.num - b.num);
+        renderDraft();
         document.getElementById('pNumber').value = ""; document.getElementById('pName').value = "";
     };
+
+    function renderDraft() {
+        document.getElementById('draftList').innerHTML = draft.map(p => `<li><b>#${p.num}</b> ${p.name}</li>`).join('');
+    }
 
     window.startNewMatch = async () => {
         const title = document.getElementById('matchTitle').value || "Partita Cloud";
@@ -148,71 +158,70 @@
     };
 
     window.updateStat = async (pIdx, field, val) => {
-        if(viewId) return; 
+        if(viewMode) return; 
         const matchRef = doc(db, "matches", currentMatchId);
         const d = await getDoc(matchRef);
-        let newPlayers = [...d.data().players];
-        newPlayers[pIdx][field] = Math.max(0, newPlayers[pIdx][field] + val);
-        await updateDoc(matchRef, { players: newPlayers });
+        let players = [...d.data().players];
+        players[pIdx][field] = Math.max(0, players[pIdx][field] + val);
+        await updateDoc(matchRef, { players });
     };
 
-    window.renameMatch = async (id, currentTitle) => {
-        const newTitle = prompt("Rinomina partita:", currentTitle);
-        if (newTitle && newTitle !== currentTitle) {
-            await updateDoc(doc(db, "matches", id), { title: newTitle });
-        }
-    };
-
-    window.deleteMatch = async (id) => {
-        if(confirm("Eliminare definitivamente?")) {
-            await deleteDoc(doc(db, "matches", id));
+    window.editPlayer = async (pIdx) => {
+        const matchRef = doc(db, "matches", currentMatchId);
+        const d = await getDoc(matchRef);
+        let players = [...d.data().players];
+        const p = players[pIdx];
+        
+        const newNum = prompt("Nuovo Numero maglia:", p.num);
+        const newName = prompt("Nuovo Nome:", p.name);
+        
+        if (newNum !== null && newName !== null) {
+            players[pIdx].num = parseInt(newNum);
+            players[pIdx].name = newName;
+            players.sort((a,b) => a.num - b.num); // Riordina dopo modifica
+            await updateDoc(matchRef, { players });
         }
     };
 
     window.shareMatch = (id, title) => {
         const shareUrl = `${window.location.origin}${window.location.pathname}?view=${id}`;
         const shareText = `Segui il live del Basket Reggello: ${title} 🏀`;
-        if (navigator.share) {
-            navigator.share({ title: 'Basket Reggello Live', text: shareText, url: shareUrl });
-        } else {
-            prompt("Copia link spettatori:", shareUrl);
-        }
+        if (navigator.share) navigator.share({ title: 'Basket Reggello Live', text: shareText, url: shareUrl });
+        else prompt("Link spettatori:", shareUrl);
     };
 
     function loadMatch(id, isViewOnly) {
         currentMatchId = id;
         document.getElementById('setupScreen').classList.add('hidden');
         document.getElementById('matchScreen').classList.remove('hidden');
-        
         if(isViewOnly) {
             document.getElementById('bodyTag').classList.add('view-only');
             document.getElementById('viewBadge').classList.remove('hidden');
             document.getElementById('shareBtnTop').classList.add('hidden');
         }
-
         onSnapshot(doc(db, "matches", id), (doc) => {
             if(!doc.exists()) return;
             const data = doc.data();
             document.getElementById('currentTitle').innerText = data.title;
             document.getElementById('shareBtnTop').onclick = () => shareMatch(id, data.title);
-            
-            // Calcolo Totali Squadra
-            const totalPts = data.players.reduce((sum, p) => sum + p.points, 0);
-            const totalFls = data.players.reduce((sum, p) => sum + p.fouls, 0);
-            document.getElementById('teamTotalPoints').innerText = totalPts;
-            document.getElementById('teamTotalFouls').innerText = totalFls;
-
+            document.getElementById('teamTotalPoints').innerText = data.players.reduce((s, p) => s + p.points, 0);
+            document.getElementById('teamTotalFouls').innerText = data.players.reduce((s, p) => s + p.fouls, 0);
             renderPlayers(data.players);
         });
     }
 
     function renderPlayers(players) {
         const list = document.getElementById('playerList');
-        list.innerHTML = players.map((p, i) => `
+        // Assicura ordine per numero anche in visualizzazione
+        const sorted = [...players].sort((a,b) => a.num - b.num);
+        list.innerHTML = sorted.map((p, i) => `
             <div class="player-card ${p.fouls === 4 ? 'warning' : ''} ${p.fouls >= 5 ? 'out' : ''}">
                 <div class="player-info">
-                    <span class="p-num">${p.num}</span>
-                    <span class="p-name">${p.name}</span>
+                    <div class="p-identity">
+                        <span class="p-num">${p.num}</span>
+                        <span class="p-name">${p.name}</span>
+                    </div>
+                    <button class="btn-icon admin-edit" onclick="editPlayer(${i})">✏️</button>
                 </div>
                 <div class="stat-section">
                     <div class="stat-box">
@@ -236,29 +245,33 @@
         `).join('');
     }
 
-    if(viewId) {
-        loadMatch(viewId, true);
+    // AVVIO
+    if(viewMode && viewMode !== 'all') {
+        loadMatch(viewMode, true);
     } else if(adminId) {
         loadMatch(adminId, false);
     } else {
+        if (viewMode === 'all') {
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('viewPanel').classList.remove('hidden');
+        }
         const q = query(collection(db, "matches"), orderBy("createdAt", "desc"));
         onSnapshot(q, (snapshot) => {
-            const listHtml = snapshot.docs.map(docSnap => {
+            document.getElementById('historyList').innerHTML = snapshot.docs.map(docSnap => {
                 const m = docSnap.data();
+                const link = viewMode === 'all' ? `?view=${docSnap.id}` : `?match=${docSnap.id}`;
                 return `
                 <div class="history-item">
-                    <div onclick="window.location.search='?match=${docSnap.id}'" style="cursor:pointer">
-                        <b>${m.title}</b><br>
-                        <small>${new Date(m.createdAt).toLocaleString()}</small>
+                    <div onclick="window.location.search='${link}'" style="cursor:pointer">
+                        <b>${m.title}</b><br><small>${new Date(m.createdAt).toLocaleString()}</small>
                     </div>
+                    ${!viewMode ? `
                     <div style="position:absolute; top:10px; right:10px; display:flex; gap:8px;">
                         <button class="btn-icon" onclick="window.shareMatch('${docSnap.id}', '${m.title}')">🔗</button>
-                        <button class="btn-icon" onclick="window.renameMatch('${docSnap.id}', '${m.title}')">✏️</button>
                         <button class="btn-icon" onclick="window.deleteMatch('${docSnap.id}')" style="color:var(--red)">🗑️</button>
-                    </div>
+                    </div>` : ''}
                 </div>`;
             }).join('');
-            document.getElementById('historyList').innerHTML = listHtml;
         });
     }
 </script>
