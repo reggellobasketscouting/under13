@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Basket Stats Reggello</title>
+    <style>
+        :root { --team-green: #2e7d32; --red: #ff4444; --bg: #121212; --card: #1e1e1e; --grey: #333; --modal-bg: rgba(0,0,0,0.98); --yellow: #ffcc00; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: white; margin: 0; padding: 6px; overflow-x: hidden; }
+        .container { max-width: 600px; margin: auto; }
+        .hidden { display: none !important; }
+        
+        /* Header */
+        .app-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .logo-img { width: 28px; height: 28px; object-fit: contain; }
+        h1 { font-size: 0.9rem; margin: 0; }
+        .btn-main { width: 100%; background: var(--team-green); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #444; background: #111; color: white; box-sizing: border-box; }
+
+        /* Setup Cards */
+        .setup-card { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 15px; position: relative; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .item-btn { background: #2a2a2a; border: 1px solid #444; padding: 12px; border-radius: 8px; color: white; text-align: left; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+        .item-btn.selected { border-color: var(--team-green); background: #1b3a21; }
+        .badge { background: var(--team-green); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
+        
+        /* Divisori Squadre */
+        .team-separator { border-top: 2px solid var(--team-green); margin: 12px 0 8px 0; padding-top: 6px; }
+        .team-separator.opponent { border-top-color: var(--red); }
+        .section-label { font-size: 0.72rem; color: var(--team-green); font-weight: bold; text-transform: uppercase; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+        .opponent .section-label { color: var(--red); }
+
+        /* Match View */
+        .team-totals { background: var(--team-green); display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 8px; border-radius: 10px; margin-bottom: 6px; }
+        .total-box { text-align: center; }
+        .total-label { display: block; font-size: 0.58rem; letter-spacing: 0.2px; }
+        .total-val { display: block; font-size: 1.15rem; font-weight: bold; font-family: 'Courier New', monospace; text-align: center; line-height: 1.1; margin-top: 2px; }
+        .player-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+        .player-btn { background: var(--card); border: 1px solid #333; border-radius: 8px; padding: 0; cursor: pointer; overflow: hidden; display: flex; flex-direction: column; }
+        
+        /* Cornici dinamiche falli */
+        .foul-warning { border: 2px solid var(--yellow) !important; }
+        .foul-danger { border: 2px solid var(--red) !important; }
+
+        .p-header-row { display: flex; align-items: center; padding: 4px 6px; border-bottom: 1px solid #333; gap: 8px; }
+        .p-num-box { background: var(--team-green) !important; color: white !important; font-weight: bold; padding: 2px 6px; border-radius: 4px; font-size: 0.78rem; min-width: 22px; text-align: center; }
+        .p-name-label { font-size: 0.74rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .p-body-row { display: flex; align-items: center; justify-content: space-between; text-align: center; padding: 6px; gap: 6px; }
+        .p-main-val { font-size: 1.45rem; font-weight: bold; font-family: 'Courier New', monospace; line-height: 1; min-width: 28px; }
+        .foul-btn { border: none; border-radius: 7px; font-weight: bold; cursor: pointer; padding: 8px 0; min-width: 36px; color: white; font-size: 1rem; }
+        .foul-btn.minus { background: #444; }
+        .foul-btn.plus { background: var(--red); }
+
+        /* Modals */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
+        .modal-content { background: var(--card); width: 100%; max-width: 400px; border-radius: 20px; padding: 20px; border: 1px solid #444; }
+        .btn-ok { background: var(--team-green); width: 100%; margin-top: 15px; padding: 15px; font-size: 1.1rem; border-radius: 10px; border: none; color: white; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body id="bodyTag">
+
+<div class="container">
+    <div class="app-header">
+        <img src="logo%20Reggello.png" alt="Logo" class="logo-img" id="mainLogo" onerror="this.style.opacity='0'">
+        <h1 id="headerTitle">Basket Reggello Stats</h1>
+    </div>
+
+    <div id="setupScreen">
+        <button class="btn-main" onclick="openAnagrafica()" style="background:#444;">⚙️ GESTISCI ANAGRAFICA GIOCATORI</button>
+        <div style="margin: 20px 0; border-bottom: 1px solid #333;"></div>
+        <button class="btn-main" onclick="startSelectionProcess()">🆕 NUOVA PARTITA</button>
+        <div class="section-label" style="margin-top:20px">Cronologia Partite</div>
+        <div id="historyList">Caricamento...</div>
+    </div>
+
+    <div id="selectionScreen" class="hidden">
+        <div class="setup-card">
+            <input type="text" id="matchTitleInput" placeholder="Titolo Partita (es. Reggello vs Firenze)">
+            <div class="section-label">CONVOCATI</div>
+            <div id="convocatiGrid" class="grid-2"></div>
+            <div class="section-label">ANAGRAFICA</div>
+            <div id="disponibiliGrid" class="grid-2"></div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn-main" onclick="location.reload()" style="background:#444">Annulla</button>
+                <button class="btn-main" onclick="confirmStartMatch()">CONFERMA</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="matchScreen" class="hidden">
+        <div class="team-totals">
+            <div class="total-box">
+                <span class="total-label">FALLI SQUADRA</span>
+                <span id="teamTotalFouls" class="total-val">0</span>
+            </div>
+            <div class="total-box">
+                <span class="total-label">FALLI AVVERSARI</span>
+                <span id="opponentTotalFouls" class="total-val">0</span>
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:6px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <h2 id="currentTitle" style="margin:0; font-size:0.78rem; color:var(--team-green);"></h2>
+                <button id="shareActionBtn" style="background:none; border:none; font-size:1.15rem; cursor:pointer;">📤</button>
+            </div>
+            <button id="exitBtn" onclick="location.href=location.pathname" style="background:#333; border:none; color:white; padding:4px 8px; border-radius:5px; font-size:0.65rem; cursor:pointer;">Esci</button>
+        </div>
+
+        <div class="team-separator">
+            <div class="section-label">
+                <span>I MIEI GIOCATORI</span>
+                <button id="editConvocatiBtn" onclick="editMatchConvocati()" style="background:none; border:none; color:var(--team-green); font-size:0.65rem; font-weight:bold; cursor:pointer;">+ MODIFICA</button>
+            </div>
+            <div id="playerGrid" class="player-grid"></div>
+        </div>
+
+        <div class="team-separator opponent">
+            <div class="section-label">FALLI AVVERSARI</div>
+            <div id="opponentGrid" class="player-grid"></div>
+            <div id="oppInputSection" class="setup-card" style="border:1px solid var(--red); margin-top:6px; padding:10px;">
+                <div style="font-size:0.7rem; color:var(--red); font-weight:bold; margin-bottom:5px;">REGISTRA FALLO AVVERSARIO</div>
+                <div style="display:flex; gap:6px;">
+                    <input type="number" id="newOppNum" placeholder="N° Maglia" style="margin:0; padding:9px;">
+                    <button onclick="addNewOpponentLive()" style="background:var(--red); border:none; color:white; border-radius:8px; padding:0 14px; font-weight:bold;">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="anagraficaModal" class="modal hidden">
+    <div class="modal-content">
+        <h3>Gestione Anagrafica</h3>
+        <input type="text" id="anagraficaInput" placeholder="Nome Giocatore">
+        <button class="btn-main" onclick="saveToAnagrafica()">Aggiungi</button>
+        <div id="anagraficaList" style="margin-top:15px; max-height:200px; overflow-y:auto;"></div>
+        <button class="btn-ok" onclick="document.getElementById('anagraficaModal').classList.add('hidden')">Chiudi</button>
+    </div>
+</div>
+
+<div id="numberModal" class="modal hidden">
+    <div class="modal-content">
+        <h3 id="numModalTitle"></h3>
+        <input type="number" id="shirtNumberInput" placeholder="Numero Maglia">
+        <button class="btn-ok" onclick="applyShirtNumber()">Conferma</button>
+        <button class="btn-main" id="removeBtn" style="background:#661111; margin-top:10px;" onclick="removeFromConvocati()">Rimuovi</button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, updateDoc, onSnapshot, query, orderBy, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDQmVNfLViOKFEK0U5htF37BSdUmQ6oi94",
+        authDomain: "statsunder13.firebaseapp.com",
+        projectId: "statsunder13",
+        storageBucket: "statsunder13.firebasestorage.app",
+        messagingSenderId: "233460085857",
+        appId: "1:233460085857:web:132407f5c98f8064ea2620"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let allPlayers = [];
+    let convocati = [];
+    let currentMatchId = null;
+    let selectedPlayerName = "";
+    let isEditingLive = false;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewModeId = urlParams.get('view');
+    const adminId = urlParams.get('match');
+    const isViewOnly = !!viewModeId;
+
+    if (isViewOnly) {
+        document.getElementById('mainLogo').style.cursor = 'default';
+        document.getElementById('exitBtn').classList.add('hidden');
+        document.getElementById('editConvocatiBtn').classList.add('hidden');
+        document.getElementById('oppInputSection').classList.add('hidden');
+        document.getElementById('shareActionBtn').classList.add('hidden');
+    }
+
+    // --- ANAGRAFICA ---
+    window.openAnagrafica = async () => {
+        const snap = await getDoc(doc(db, "config", "anagrafica"));
+        allPlayers = snap.exists() ? snap.data().list : [];
+        renderAnagrafica();
+        document.getElementById('anagraficaModal').classList.remove('hidden');
+    };
+    function renderAnagrafica() {
+        document.getElementById('anagraficaList').innerHTML = allPlayers.map(name => `
+            <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333;">
+                <span>${name}</span>
+                <button onclick="deleteFromAnagrafica('${name}')" style="background:none; border:none; color:var(--red)">🗑️</button>
+            </div>`).join('');
+    }
+    window.saveToAnagrafica = async () => {
+        const input = document.getElementById('anagraficaInput');
+        if(!input.value.trim()) return;
+        allPlayers.push(input.value.trim());
+        await setDoc(doc(db, "config", "anagrafica"), { list: allPlayers });
+        input.value = ""; renderAnagrafica();
+    };
+    window.deleteFromAnagrafica = async (name) => {
+        allPlayers = allPlayers.filter(p => p !== name);
+        await setDoc(doc(db, "config", "anagrafica"), { list: allPlayers });
+        renderAnagrafica();
+    };
+
+    // --- SELEZIONE ---
+    window.startSelectionProcess = async () => {
+        isEditingLive = false;
+        const snap = await getDoc(doc(db, "config", "anagrafica"));
+        allPlayers = snap.exists() ? snap.data().list : [];
+        convocati = [];
+        document.getElementById('setupScreen').classList.add('hidden');
+        document.getElementById('selectionScreen').classList.remove('hidden');
+        renderSelectionGrids();
+    };
+
+    window.editMatchConvocati = async () => {
+        isEditingLive = true;
+        const snapMatch = await getDoc(doc(db, "matches", currentMatchId));
+        convocati = snapMatch.data().players;
+        document.getElementById('matchScreen').classList.add('hidden');
+        document.getElementById('selectionScreen').classList.remove('hidden');
+        document.getElementById('matchTitleInput').classList.add('hidden');
+        renderSelectionGrids();
+    };
+
+    function renderSelectionGrids() {
+        const disponibili = allPlayers.filter(p => !convocati.find(c => c.name === p));
+        document.getElementById('disponibiliGrid').innerHTML = disponibili.map(name => `<div class="item-btn" onclick="openNumberModal('${name}')">${name} <span>+</span></div>`).join('');
+        document.getElementById('convocatiGrid').innerHTML = convocati.map(c => `<div class="item-btn selected" onclick="openNumberModal('${c.name}', ${c.num})"><span class="badge">${c.num}</span> ${c.name}</div>`).join('');
+    }
+
+    window.openNumberModal = (name, existingNum = "") => {
+        selectedPlayerName = name;
+        document.getElementById('numModalTitle').innerText = name;
+        document.getElementById('shirtNumberInput').value = existingNum;
+        document.getElementById('numberModal').classList.remove('hidden');
+    };
+
+    window.applyShirtNumber = () => {
+        const num = parseInt(document.getElementById('shirtNumberInput').value);
+        if(isNaN(num)) return;
+        const idx = convocati.findIndex(c => c.name === selectedPlayerName);
+        if(idx >= 0) convocati[idx].num = num;
+        else convocati.push({ name: selectedPlayerName, num, fouls: 0 });
+        document.getElementById('numberModal').classList.add('hidden');
+        renderSelectionGrids();
+    };
+
+    window.removeFromConvocati = () => {
+        convocati = convocati.filter(c => c.name !== selectedPlayerName);
+        document.getElementById('numberModal').classList.add('hidden');
+        renderSelectionGrids();
+    };
+
+    window.confirmStartMatch = async () => {
+        if(isEditingLive) {
+            await updateDoc(doc(db, "matches", currentMatchId), { players: convocati });
+            location.reload();
+        } else {
+            const title = document.getElementById('matchTitleInput').value || "Partita";
+            const docRef = await addDoc(collection(db, "matches"), {
+                title, players: convocati, opponentFouls: [], createdAt: Date.now()
+            });
+            location.search = `?match=${docRef.id}`;
+        }
+    };
+
+    // --- LOGICA PARTITA ---
+    window.adjustPlayerFouls = async (idx, val) => {
+        if(isViewOnly) return;
+        const matchRef = doc(db, "matches", currentMatchId);
+        const d = await getDoc(matchRef);
+        let players = [...d.data().players];
+        const current = players[idx].fouls || 0;
+        players[idx].fouls = Math.max(0, current + val);
+        await updateDoc(matchRef, { players });
+    };
+
+    window.adjustOpponentFouls = async (num, val) => {
+        if(isViewOnly) return;
+        const matchRef = doc(db, "matches", currentMatchId);
+        const d = await getDoc(matchRef);
+        let opps = [...(d.data().opponentFouls || [])];
+        const idx = opps.findIndex(o => o.num === num);
+        if (idx >= 0) {
+            opps[idx].fouls = Math.max(0, opps[idx].fouls + val);
+            if(opps[idx].fouls === 0) opps.splice(idx, 1);
+        } else if (val > 0) {
+            opps.push({ num, fouls: 1 });
+        }
+        await updateDoc(matchRef, { opponentFouls: opps });
+    };
+
+    window.addNewOpponentLive = async () => {
+        const numInput = document.getElementById('newOppNum');
+        const num = parseInt(numInput.value);
+        if(isNaN(num)) return;
+        const matchRef = doc(db, "matches", currentMatchId);
+        const d = await getDoc(matchRef);
+        let opps = [...(d.data().opponentFouls || [])];
+        const idx = opps.findIndex(o => o.num === num);
+        if (idx >= 0) opps[idx].fouls += 1; else opps.push({ num, fouls: 1 });
+        await updateDoc(matchRef, { opponentFouls: opps });
+        numInput.value = "";
+    };
+
+    window.shareMatch = async (id, title) => {
+        const shareUrl = `${window.location.origin}${window.location.pathname}?view=${id}`;
+        const shareText = `Segui il live del Basket Reggello: ${title} 🏀`;
+        if (navigator.share) {
+            try {
+                await navigator.share({ title: 'Basket Reggello Live', text: shareText, url: shareUrl });
+            } catch (err) { console.log("Share cancelled"); }
+        } else {
+            const dummy = document.createElement('input');
+            document.body.appendChild(dummy);
+            dummy.value = shareUrl;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+            alert("Link spettatori copiato negli appunti!");
+        }
+    };
+
+    window.deleteMatch = async (id) => {
+        if(confirm("Eliminare questa partita?")) await deleteDoc(doc(db, "matches", id));
+    };
+
+    // --- CARICAMENTO ---
+    const mId = adminId || viewModeId;
+    if(mId) {
+        currentMatchId = mId;
+        document.getElementById('setupScreen').classList.add('hidden');
+        document.getElementById('matchScreen').classList.remove('hidden');
+        onSnapshot(doc(db, "matches", mId), (d) => {
+            if(!d.exists()) return;
+            const data = d.data();
+            document.getElementById('currentTitle').innerText = data.title;
+            document.getElementById('shareActionBtn').onclick = () => window.shareMatch(mId, data.title);
+            
+            const sortedReg = data.players.map((p, i) => ({...p, originalIdx: i})).sort((a,b) => a.num - b.num);
+            document.getElementById('teamTotalFouls').innerText = data.players.reduce((s,p)=>s+(p.fouls || 0), 0);
+            document.getElementById('opponentTotalFouls').innerText = (data.opponentFouls || []).reduce((s,o)=>s+(o.fouls || 0), 0);
+
+            document.getElementById('playerGrid').innerHTML = sortedReg.map(p => {
+                let status = p.fouls >= 5 ? 'foul-danger' : (p.fouls === 4 ? 'foul-warning' : '');
+                let fColor = p.fouls >= 5 ? 'var(--red)' : (p.fouls === 4 ? 'var(--yellow)' : 'white');
+                return `
+                <div class="player-btn ${status}">
+                    <div class="p-header-row"><div class="p-num-box">${p.num}</div><div class="p-name-label">${p.name}</div></div>
+                    <div class="p-body-row">
+                        <button class="foul-btn minus" ${isViewOnly ? 'disabled' : `onclick="adjustPlayerFouls(${p.originalIdx}, -1)"`}>-</button>
+                        <div><span class="p-main-val" style="color:${fColor}">${p.fouls || 0}</span><br><small>FALLI</small></div>
+                        <button class="foul-btn plus" ${isViewOnly ? 'disabled' : `onclick="adjustPlayerFouls(${p.originalIdx}, 1)"`}>+</button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            const sortedOpps = [...(data.opponentFouls || [])].sort((a,b) => a.num - b.num);
+            document.getElementById('opponentGrid').innerHTML = sortedOpps.map(o => {
+                let status = o.fouls >= 5 ? 'foul-danger' : (o.fouls === 4 ? 'foul-warning' : '');
+                let fColor = o.fouls >= 5 ? 'var(--red)' : (o.fouls === 4 ? 'var(--yellow)' : 'white');
+                return `
+                <div class="player-btn ${status}">
+                    <div class="p-header-row" style="background:#333"><div class="p-num-box">#${o.num}</div><div class="p-name-label">AVVERSARIO</div></div>
+                    <div class="p-body-row">
+                        <button class="foul-btn minus" ${isViewOnly ? 'disabled' : `onclick="adjustOpponentFouls(${o.num}, -1)"`}>-</button>
+                        <div><span class="p-main-val" style="color:${fColor}">${o.fouls}</span><br><small>FALLI</small></div>
+                        <button class="foul-btn plus" ${isViewOnly ? 'disabled' : `onclick="adjustOpponentFouls(${o.num}, 1)"`}>+</button>
+                    </div>
+                </div>`;
+            }).join('');
+        });
+    } else {
+        onSnapshot(query(collection(db, "matches"), orderBy("createdAt", "desc")), (snap) => {
+            document.getElementById('historyList').innerHTML = snap.docs.map(d => `
+                <div class="setup-card" style="display:flex; justify-content:space-between; align-items:center">
+                    <div onclick="location.search='?match=${d.id}'" style="cursor:pointer">
+                        <b>${d.data().title}</b><br><small>${new Date(d.data().createdAt).toLocaleDateString()}</small>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-icon" onclick="window.shareMatch('${d.id}', '${d.data().title}')" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🔗</button>
+                        <button onclick="deleteMatch('${d.id}')" style="background:none; border:none; color:var(--red); font-size:1.2rem; cursor:pointer;">🗑️</button>
+                    </div>
+                </div>`).join('');
+        });
+    }
+</script>
+</body>
+</html>
